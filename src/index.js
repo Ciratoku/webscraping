@@ -10,15 +10,32 @@ const getInnerHtml = async function (page, selector) {
   const element = await page.$(selector);
   if (element) {
     return await element.evaluate((el) => el.textContent);
-  } else {
-    const price = await page.$(".PriceInfo_root__GX9Xp");
-    return await price.evaluate((el) => el.textContent);
   }
+  return "";
 };
+async function getPrice(page) {
+  const info = {};
+  const parentSelector = ".PriceInfo_root__GX9Xp";
+  const childTexts = await page.evaluate((selector) => {
+    const parentElement = document.querySelector(selector);
+    if (!parentElement) return [];
+    const children = parentElement.children;
+    const texts = Array.from(children).map((child) => child.textContent.trim());
+
+    return texts;
+  }, parentSelector);
+  if (childTexts.length > 1) {
+    info.oldPrice = childTexts[0].split(" ")[0];
+    info.newPrice = childTexts[1].split(" ")[0];
+    return info;
+  }
+  info.price = childTexts[0].split(" ")[0];
+  return info;
+}
 
 const url = process.argv[2];
 const region = process.argv[3];
-const info = {};
+let info;
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -37,8 +54,9 @@ const info = {};
   await element.click();
   await wait(1);
   await page.screenshot({ path: "screenshot.jpg" });
-  info.price = await getInnerHtml(page, ".Price_role_old__r1uT1");
-  info.discount = await getInnerHtml(page, ".Price_role_discount__l_tpE");
+  info = await getPrice(page);
+  //   info.price = await getInnerHtml(page, ".Price_role_old__r1uT1");
+  //   info.discount = await getInnerHtml(page, ".Price_role_discount__l_tpE");
   info.rating = await getInnerHtml(page, ".ActionsRow_stars__EKt42");
   ("ActionsRow_stars__EKt42");
   info.reviews = await getInnerHtml(page, ".ActionsRow_reviews__AfSj_");
