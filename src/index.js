@@ -51,6 +51,7 @@ let info;
       document.querySelectorAll(".UiRegionListBase_list__cH0fK > li")
     ).find((el) => el.textContent === text);
   }, region);
+  await wait(1);
   await element.click();
   await wait(1);
   await page.screenshot({ path: "screenshot.jpg" });
